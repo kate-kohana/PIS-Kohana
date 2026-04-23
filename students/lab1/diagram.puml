@@ -1,0 +1,36 @@
+@startuml
+actor Читатель as Reader
+participant "Мобильное приложение" as App
+participant "Book Service" as BookAPI
+participant "Shelf Service" as ShelfAPI
+participant "Search Index" as Search
+database "MongoDB" as DB
+
+Reader -> App: Заполняет форму книги
+App -> App: Валидация полей
+
+App -> BookAPI: POST /api/books
+activate BookAPI
+
+BookAPI -> Search: Проверить дубликат
+Search --> BookAPI: Дубликатов нет
+
+BookAPI -> DB: INSERT книга
+DB --> BookAPI: book_id = "BOOK-178"
+
+BookAPI -> ShelfAPI: Обновить счётчик полки
+activate ShelfAPI
+ShelfAPI -> DB: UPDATE shelf + 1
+DB --> ShelfAPI: OK
+ShelfAPI --> BookAPI: Статистика обновлена
+deactivate ShelfAPI
+
+BookAPI -> Search: Индексировать книгу
+Search --> BookAPI: OK
+
+BookAPI --> App: 201 Created
+deactivate BookAPI
+
+App --> Reader: Показать карточку книги
+
+@enduml
